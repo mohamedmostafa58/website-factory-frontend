@@ -1,0 +1,75 @@
+---
+import type { ContentBlock } from '@/lib/types'
+
+interface Props {
+  block: ContentBlock
+}
+
+const { block } = Astro.props
+
+const bgClasses: Record<string, string> = {
+  transparent: '',
+  gray: 'bg-gray-50',
+  'primary-light': 'bg-primary-light',
+  dark: 'bg-gray-900 text-white',
+}
+
+const widthClasses: Record<string, string> = {
+  full: 'col-span-full',
+  half: 'col-span-1',
+  third: 'col-span-1',
+  'two-thirds': 'col-span-2',
+}
+
+/**
+ * Simple rich text serializer — converts Lexical JSON to HTML.
+ * In production, use @payloadcms/richtext-lexical's serializer.
+ */
+function serializeRichText(node: any): string {
+  if (!node) return ''
+
+  if (typeof node === 'string') return node
+
+  if (Array.isArray(node)) {
+    return node.map(serializeRichText).join('')
+  }
+
+  if (node.type === 'root' && node.children) {
+    return node.children.map(serializeRichText).join('')
+  }
+
+  const children = node.children ? node.children.map(serializeRichText).join('') : ''
+
+  switch (node.type) {
+    case 'paragraph': return `<p class="mb-4 leading-relaxed">${children}</p>`
+    case 'heading': return `<h${node.tag ?? 2} class="font-heading font-bold mb-4">${children}</h${node.tag ?? 2}>`
+    case 'list': return node.listType === 'bullet'
+      ? `<ul class="list-disc pl-6 mb-4 space-y-1">${children}</ul>`
+      : `<ol class="list-decimal pl-6 mb-4 space-y-1">${children}</ol>`
+    case 'listitem': return `<li>${children}</li>`
+    case 'link': return `<a href="${node.fields?.url ?? '#'}" class="text-primary hover:underline">${children}</a>`
+    case 'text':
+      let text = node.text ?? ''
+      if (node.format & 1) text = `<strong>${text}</strong>`
+      if (node.format & 2) text = `<em>${text}</em>`
+      return text
+    default: return children
+  }
+}
+---
+
+<section class={`py-12 px-4 ${bgClasses[block.backgroundColor ?? 'transparent'] ?? ''}`}>
+  <div class={`mx-auto ${block.layout === 'narrow' ? 'max-w-3xl' : 'max-w-7xl'}`}>
+    <div class={`grid gap-8 ${
+      block.layout === 'two-col' ? 'grid-cols-1 md:grid-cols-2' :
+      block.layout === 'sidebar' ? 'grid-cols-1 md:grid-cols-3' :
+      'grid-cols-1'
+    }`}>
+      {block.columns?.map((col) => (
+        <div class={`prose max-w-none ${widthClasses[col.width] ?? ''}`}>
+          <Fragment set:html={serializeRichText(col.richText?.root ?? col.richText)} />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

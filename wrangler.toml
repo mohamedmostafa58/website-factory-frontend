@@ -1,0 +1,17 @@
+# Astro Frontend — Cloudflare Pages deployment
+name = "website-factory-frontend"
+compatibility_date = "2024-12-01"
+pages_build_output_dir = "dist"
+
+# KV Namespace for resilient site data cache
+[[kv_namespaces]]
+binding = "SITE_CACHE"
+id = "2bee696f1e8247628e5d0f4f34577e8b"
+
+[vars]
+PAYLOAD_API_URL = "https://cms.yourfactory.com"
+WEBHOOK_SECRET = "change-me-match-payload-config"
+
+# NOTE: For Cloudflare Pages, environment variables are set in the
+# Cloudflare dashboard under Pages > Settings > Environment Variables.
+# This wrangler.toml is used for `wrangler pages dev` local testing.

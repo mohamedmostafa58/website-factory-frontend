@@ -1,0 +1,30 @@
+---
+import type { Block } from '@/lib/types'
+import HeroBlock from './blocks/HeroBlock.astro'
+import ContentBlock from './blocks/ContentBlock.astro'
+import ImageGalleryBlock from './blocks/ImageGalleryBlock.astro'
+import ContactFormBlock from './blocks/ContactFormBlock.astro'
+
+interface Props {
+  blocks: Block[]
+  siteId: string
+  pageSlug: string
+}
+
+const { blocks, siteId, pageSlug } = Astro.props
+---
+
+{blocks?.map((block) => {
+  switch (block.blockType) {
+    case 'hero':
+      return <HeroBlock block={block} />
+    case 'content':
+      return <ContentBlock block={block} />
+    case 'imageGallery':
+      return <ImageGalleryBlock block={block} />
+    case 'contactForm':
+      return <ContactFormBlock block={block} siteId={siteId} pageSlug={pageSlug} />
+    default:
+      return null
+  }
+})}

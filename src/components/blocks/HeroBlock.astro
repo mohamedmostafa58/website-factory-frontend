@@ -1,0 +1,105 @@
+---
+import type { HeroBlock } from '@/lib/types'
+
+interface Props {
+  block: HeroBlock
+}
+
+const { block } = Astro.props
+const bgUrl = block.backgroundImage?.url
+const opacity = (block.overlayOpacity ?? 40) / 100
+---
+
+{block.style === 'centered' && (
+  <section class="relative py-24 px-4 text-center overflow-hidden" style={bgUrl ? `background-image: url(${bgUrl}); background-size: cover; background-position: center;` : ''}>
+    {bgUrl && <div class="absolute inset-0 bg-black" style={`opacity: ${opacity}`} />}
+    <div class="relative max-w-4xl mx-auto">
+      <h1 class={`text-4xl md:text-6xl font-heading font-bold mb-6 ${bgUrl ? 'text-white' : 'text-on-surface'}`}>
+        {block.heading}
+      </h1>
+      {block.subheading && (
+        <p class={`text-xl md:text-2xl mb-8 ${bgUrl ? 'text-gray-200' : 'text-gray-600'}`}>
+          {block.subheading}
+        </p>
+      )}
+      <div class="flex flex-wrap justify-center gap-4">
+        {block.cta?.label && block.cta.url && (
+          <a
+            href={block.cta.url}
+            class={`px-8 py-3 rounded-theme font-medium text-lg transition-all ${
+              block.cta.variant === 'outline'
+                ? 'border-2 border-primary text-primary hover:bg-primary hover:text-white'
+                : block.cta.variant === 'secondary'
+                  ? 'bg-secondary text-white hover:opacity-90'
+                  : 'bg-primary text-white hover:opacity-90'
+            }`}
+          >
+            {block.cta.label}
+          </a>
+        )}
+        {block.secondaryCta?.label && block.secondaryCta.url && (
+          <a
+            href={block.secondaryCta.url}
+            class={`px-8 py-3 rounded-theme font-medium text-lg border-2 transition-all ${bgUrl ? 'border-white text-white hover:bg-white hover:text-gray-900' : 'border-gray-300 text-on-surface hover:border-primary hover:text-primary'}`}
+          >
+            {block.secondaryCta.label}
+          </a>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+{block.style === 'split' && (
+  <section class="py-16 px-4">
+    <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-heading font-bold mb-6 text-on-surface">
+          {block.heading}
+        </h1>
+        {block.subheading && (
+          <p class="text-xl text-gray-600 mb-8">{block.subheading}</p>
+        )}
+        <div class="flex flex-wrap gap-4">
+          {block.cta?.label && block.cta.url && (
+            <a href={block.cta.url} class="px-8 py-3 rounded-theme bg-primary text-white font-medium hover:opacity-90 transition-opacity">
+              {block.cta.label}
+            </a>
+          )}
+        </div>
+      </div>
+      {bgUrl && (
+        <div class="rounded-theme overflow-hidden">
+          <img src={bgUrl} alt={block.heading} class="w-full h-auto object-cover" />
+        </div>
+      )}
+    </div>
+  </section>
+)}
+
+{block.style === 'fullscreen' && (
+  <section
+    class="relative min-h-screen flex items-center justify-center text-center px-4"
+    style={bgUrl ? `background-image: url(${bgUrl}); background-size: cover; background-position: center;` : 'background-color: var(--color-primary);'}
+  >
+    <div class="absolute inset-0 bg-black" style={`opacity: ${opacity}`} />
+    <div class="relative max-w-4xl">
+      <h1 class="text-5xl md:text-7xl font-heading font-bold mb-6 text-white">{block.heading}</h1>
+      {block.subheading && <p class="text-xl md:text-2xl text-gray-200 mb-10">{block.subheading}</p>}
+      {block.cta?.label && block.cta.url && (
+        <a href={block.cta.url} class="inline-block px-10 py-4 rounded-theme bg-white text-gray-900 font-bold text-lg hover:bg-gray-100 transition-colors">
+          {block.cta.label}
+        </a>
+      )}
+    </div>
+  </section>
+)}
+
+{block.style === 'minimal' && (
+  <section class="py-16 px-4">
+    <div class="max-w-3xl mx-auto">
+      <h1 class="text-3xl md:text-4xl font-heading font-bold mb-4 text-on-surface">{block.heading}</h1>
+      {block.subheading && <p class="text-lg text-gray-600">{block.subheading}</p>}
+    </div>
+  </section>
+)}

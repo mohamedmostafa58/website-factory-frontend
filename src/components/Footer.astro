@@ -1,0 +1,62 @@
+---
+import type { FooterGroup } from '@/lib/types'
+
+interface Props {
+  footerLinks: FooterGroup[]
+  footerContent?: {
+    copyrightText?: string
+    showPoweredBy?: boolean
+  }
+  siteName: string
+}
+
+const { footerLinks, footerContent, siteName } = Astro.props
+const year = new Date().getFullYear()
+const copyright = (footerContent?.copyrightText ?? '© {year} All rights reserved.').replace('{year}', String(year))
+---
+
+<footer class="bg-gray-900 text-gray-300">
+  {/* Footer link columns */}
+  {footerLinks.length > 0 && (
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class={`grid gap-8 ${
+        footerLinks.length === 1 ? 'grid-cols-1' :
+        footerLinks.length === 2 ? 'grid-cols-2' :
+        footerLinks.length === 3 ? 'grid-cols-2 md:grid-cols-3' :
+        'grid-cols-2 md:grid-cols-4'
+      }`}>
+        {footerLinks.map((group) => (
+          <div>
+            <h3 class="text-white font-heading font-semibold text-sm uppercase tracking-wider mb-4">
+              {group.groupLabel}
+            </h3>
+            <ul class="space-y-2">
+              {group.links?.map((link) => (
+                <li>
+                  <a
+                    href={link.url}
+                    target={link.openInNewTab ? '_blank' : undefined}
+                    rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
+                    class="text-gray-400 hover:text-white text-sm transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {/* Bottom bar */}
+  <div class="border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
+      <p>{copyright}</p>
+      {footerContent?.showPoweredBy && (
+        <p class="mt-2 sm:mt-0">Powered by Website Factory</p>
+      )}
+    </div>
+  </div>
+</footer>

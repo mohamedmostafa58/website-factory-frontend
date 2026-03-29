@@ -1,0 +1,94 @@
+---
+import type { SiteSettings, Page, NavLink } from '@/lib/types'
+import { themeToCSSVars, getGoogleFontsUrl, getLayoutThemeClasses } from '@/lib/theme'
+import Header from '@/components/Header.astro'
+import Footer from '@/components/Footer.astro'
+
+interface Props {
+  settings: SiteSettings | null
+  page?: Page | null
+  siteName: string
+}
+
+const { settings, page, siteName } = Astro.props
+
+const theme = settings?.theme
+const cssVars = themeToCSSVars(theme)
+const googleFontsUrl = getGoogleFontsUrl(theme)
+const layoutThemeClass = getLayoutThemeClasses(theme?.layoutTheme)
+
+// Page-level overrides
+const pageOverrideVars: string[] = []
+if (page?.pageStyle?.overridePrimaryColor) {
+  pageOverrideVars.push(`--color-primary: ${page.pageStyle.overridePrimaryColor}`)
+}
+if (page?.pageStyle?.overrideBackgroundColor) {
+  pageOverrideVars.push(`--color-background: ${page.pageStyle.overrideBackgroundColor}`)
+}
+
+const metaTitle = page?.seo?.metaTitle ?? page?.title ?? settings?.seo?.metaTitle ?? siteName
+const metaDescription = page?.seo?.metaDescription ?? settings?.seo?.metaDescription ?? ''
+const ogImageUrl = page?.seo?.ogImage?.url ?? settings?.seo?.ogImage?.url
+---
+
+<!doctype html>
+<html lang="en" class={layoutThemeClass}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{metaTitle}</title>
+    {metaDescription && <meta name="description" content={metaDescription} />}
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    <meta property="og:title" content={metaTitle} />
+
+    {/* Google Fonts — dynamic based on CMS selection */}
+    {googleFontsUrl && <link rel="preconnect" href="https://fonts.googleapis.com" />}
+    {googleFontsUrl && <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />}
+    {googleFontsUrl && <link rel="stylesheet" href={googleFontsUrl} />}
+
+    {/* Dynamic CSS variables from Payload CMS theme */}
+    <style is:inline define:vars={{}} set:html={`
+      :root {
+        ${cssVars}
+        ${pageOverrideVars.join(';\n        ')}
+      }
+
+      body {
+        font-family: var(--font-body);
+        color: var(--color-text);
+        background-color: var(--color-background);
+      }
+
+      /* Layout theme variants */
+      .theme-modern { --spacing-unit: 1rem; --heading-weight: 600; }
+      .theme-classic { --spacing-unit: 1.25rem; --heading-weight: 700; }
+      .theme-bold { --spacing-unit: 1.5rem; --heading-weight: 800; }
+      .theme-minimal { --spacing-unit: 0.75rem; --heading-weight: 500; }
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        font-weight: var(--heading-weight, 600);
+      }
+    `} />
+
+    {/* Page-specific custom CSS */}
+    {page?.pageStyle?.customCSS && <style is:inline set:html={page.pageStyle.customCSS} />}
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <Header
+      siteName={siteName}
+      links={settings?.headerLinks ?? []}
+    />
+
+    <main class="flex-1">
+      <slot />
+    </main>
+
+    <Footer
+      footerLinks={settings?.footerLinks ?? []}
+      footerContent={settings?.footerContent}
+      siteName={siteName}
+    />
+  </body>
+</html>

@@ -1,0 +1,84 @@
+---
+/**
+ * Dynamic catch-all route — the core of the Website Factory frontend.
+ *
+ * Flow:
+ * 1. Extract domain from request hostname
+ * 2. Fetch site bundle (settings + pages) via resilient cache
+ * 3. Find the matching page by slug
+ * 4. Render using the dynamic design system
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import BlockRenderer from '@/components/BlockRenderer.astro'
+import { fetchSiteBundle, findPageInBundle } from '@/lib/resilient-fetch'
+import type { SiteBundle } from '@/lib/types'
+
+// Get the domain from the request
+const hostname = Astro.url.hostname
+
+// Get Cloudflare bindings from the runtime
+const runtime = Astro.locals.runtime as {
+  env: {
+    SITE_CACHE: KVNamespace
+    PAYLOAD_API_URL: string
+    PAYLOAD_API_KEY?: string
+  }
+}
+
+// Fetch the entire site bundle (resilient — falls back to KV cache)
+const { bundle, fromCache, error } = await fetchSiteBundle(hostname, runtime.env)
+
+// If no data at all (new site with no cache), show a setup page
+if (!bundle) {
+  return new Response(
+    `<!DOCTYPE html>
+    <html><head><title>Site Not Found</title></head>
+    <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+      <div style="text-align:center;max-width:400px;">
+        <h1 style="font-size:2rem;margin-bottom:1rem;">Site Not Found</h1>
+        <p style="color:#666;">No site is configured for <strong>${hostname}</strong>.</p>
+        <p style="color:#999;font-size:0.875rem;margin-top:1rem;">If you just set this up, publish content in the CMS and try again.</p>
+      </div>
+    </body></html>`,
+    { status: 404, headers: { 'Content-Type': 'text/html' } },
+  )
+}
+
+// Resolve the slug
+const slugParam = Astro.params.slug ?? ''
+const page = findPageInBundle(bundle, slugParam)
+
+if (!page) {
+  return new Response(
+    `<!DOCTYPE html>
+    <html><head><title>Page Not Found — ${bundle.site.name}</title></head>
+    <body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+      <div style="text-align:center;">
+        <h1 style="font-size:3rem;color:${bundle.settings?.theme?.primaryColor ?? '#3B82F6'};">404</h1>
+        <p style="color:#666;">This page doesn't exist.</p>
+        <a href="/" style="color:${bundle.settings?.theme?.primaryColor ?? '#3B82F6'};">Go Home</a>
+      </div>
+    </body></html>`,
+    { status: 404, headers: { 'Content-Type': 'text/html' } },
+  )
+}
+---
+
+<BaseLayout
+  settings={bundle.settings}
+  page={page}
+  siteName={bundle.site.name}
+>
+  {/* Debug banner when serving cached content (only in dev) */}
+  {fromCache && import.meta.env.DEV && (
+    <div class="bg-yellow-100 text-yellow-800 text-center py-1 text-xs">
+      Serving cached content — CMS may be unavailable
+    </div>
+  )}
+
+  <BlockRenderer
+    blocks={page.blocks ?? []}
+    siteId={bundle.site.id}
+    pageSlug={page.slug}
+  />
+</BaseLayout>

@@ -1,0 +1,115 @@
+---
+import type { ContactFormBlock } from '@/lib/types'
+
+interface Props {
+  block: ContactFormBlock
+  siteId: string
+  pageSlug: string
+}
+
+const { block, siteId, pageSlug } = Astro.props
+---
+
+<section class="py-12 px-4">
+  <div class="max-w-2xl mx-auto">
+    {block.heading && (
+      <h2 class="text-3xl font-heading font-bold mb-4 text-center text-on-surface">
+        {block.heading}
+      </h2>
+    )}
+    {block.description && (
+      <p class="text-gray-600 text-center mb-8">{block.description}</p>
+    )}
+
+    <form
+      id="contact-form"
+      class="space-y-6"
+      data-site-id={siteId}
+      data-page-slug={pageSlug}
+      data-success-message={block.successMessage ?? 'Thank you!'}
+    >
+      {block.fields?.map((field) => (
+        <div>
+          <label class="block text-sm font-medium text-on-surface mb-1">
+            {field.label}
+            {field.required && <span class="text-red-500">*</span>}
+          </label>
+
+          {field.fieldType === 'textarea' ? (
+            <textarea
+              name={field.label}
+              required={field.required}
+              rows={4}
+              class="w-full px-4 py-2 border border-gray-300 rounded-theme focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+            />
+          ) : field.fieldType === 'select' ? (
+            <select
+              name={field.label}
+              required={field.required}
+              class="w-full px-4 py-2 border border-gray-300 rounded-theme focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+            >
+              <option value="">Select...</option>
+              {field.options?.map((opt) => (
+                <option value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={field.fieldType}
+              name={field.label}
+              required={field.required}
+              class="w-full px-4 py-2 border border-gray-300 rounded-theme focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow"
+            />
+          )}
+        </div>
+      ))}
+
+      <button
+        type="submit"
+        class="w-full px-8 py-3 bg-primary text-white rounded-theme font-medium hover:opacity-90 transition-opacity"
+      >
+        {block.submitLabel ?? 'Send Message'}
+      </button>
+
+      <div id="form-status" class="hidden text-center py-3 rounded-theme" />
+    </form>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('contact-form') as HTMLFormElement
+  const status = document.getElementById('form-status') as HTMLDivElement
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const formData = new FormData(form)
+    const data: Record<string, string> = {}
+    formData.forEach((value, key) => { data[key] = value.toString() })
+
+    try {
+      const res = await fetch('/api/form-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          siteId: form.dataset.siteId,
+          page: form.dataset.pageSlug,
+          data,
+        }),
+      })
+
+      status.classList.remove('hidden')
+      if (res.ok) {
+        status.className = 'text-center py-3 rounded-theme bg-green-50 text-green-700'
+        status.textContent = form.dataset.successMessage ?? 'Thank you!'
+        form.reset()
+      } else {
+        status.className = 'text-center py-3 rounded-theme bg-red-50 text-red-700'
+        status.textContent = 'Something went wrong. Please try again.'
+      }
+    } catch {
+      status.classList.remove('hidden')
+      status.className = 'text-center py-3 rounded-theme bg-red-50 text-red-700'
+      status.textContent = 'Network error. Please try again.'
+    }
+  })
+</script>
