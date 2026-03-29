@@ -9,8 +9,8 @@ binding = "SITE_CACHE"
 id = "2bee696f1e8247628e5d0f4f34577e8b"
 
 [vars]
-PAYLOAD_API_URL = "https://cms.yourfactory.com"
-WEBHOOK_SECRET = "change-me-match-payload-config"
+PAYLOAD_API_URL = "https://website-factory-cms.nick-e3c.workers.dev"
+WEBHOOK_SECRET = "wf-webhook-secret-2024"
 
 # NOTE: For Cloudflare Pages, environment variables are set in the
 # Cloudflare dashboard under Pages > Settings > Environment Variables.
